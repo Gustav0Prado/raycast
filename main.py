@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import pygame, math
+import pygame, math, asyncio
 from pygame.locals import *
 
 WIDTH  = 1024
@@ -205,11 +205,12 @@ def drawMap2D():
             pygame.draw.line( screen, ((138, 138, 138)), (xo, yo + mapS), (xo + mapS, yo + mapS), 1)
             pygame.draw.line( screen, ((138, 138, 138)), (xo + mapS, yo), (xo + mapS, yo + mapS), 1)
 
+
+
 # Opcoes booleanas
 done = False
 mapOn = True
 rescale = False
-
 
 # Inicia jogo e instancia estruturas
 pygame.init()
@@ -217,47 +218,52 @@ player = Player()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-while not done:
-   for event in pygame.event.get():
-      if event.type == KEYDOWN:
-         if event.key == K_ESCAPE:
-            done = True
-         if event.key == K_m:
-            mapOn = not mapOn
+async def main():
+   global done, mapOn
 
-         # Aumenta ou diminui tamanho do minimapa
-         if event.key == pygame.K_KP_PLUS:
-            if SCALE < 1:
-               OLDSCALE = SCALE
-               SCALE *= 2
-               mapS = 64 * SCALE
-               PLAYER_SIZE = 25 * SCALE / 1.1
-               rescale = True
+   while not done:
+      for event in pygame.event.get():
+         if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+               done = True
+            if event.key == K_m:
+               mapOn = not mapOn
 
-         if event.key == pygame.K_KP_MINUS:
-            if SCALE > 0.25:
-               OLDSCALE = SCALE
-               SCALE /= 2
-               mapS = 64 * SCALE
-               PLAYER_SIZE = 25 * SCALE / 1.1
-               rescale = True
-      
-      elif event.type == QUIT:
-         done = True
+            # Aumenta ou diminui tamanho do minimapa
+            if event.key == pygame.K_KP_PLUS:
+               if SCALE < 1:
+                  OLDSCALE = SCALE
+                  SCALE *= 2
+                  mapS = 64 * SCALE
+                  PLAYER_SIZE = 25 * SCALE / 1.1
+                  rescale = True
 
-   
-   # Atualiza player com base nas teclas apertadas
-   pressed_keys = pygame.key.get_pressed()
-   player.update(pressed_keys)
-
-   # Desenha fundo
-   screen.fill((105, 105, 105))
-   if mapOn:
-      drawMap2D()
-      screen.blit(player.surf, player.rect)
-   drawRays2D()
-
-   # Flipa display e espera relogio
-   pygame.display.flip()
-   clock.tick(30)
+            if event.key == pygame.K_KP_MINUS:
+               if SCALE > 0.25:
+                  OLDSCALE = SCALE
+                  SCALE /= 2
+                  mapS = 64 * SCALE
+                  PLAYER_SIZE = 25 * SCALE / 1.1
+                  rescale = True
          
+         elif event.type == QUIT:
+            done = True
+
+      
+      # Atualiza player com base nas teclas apertadas
+      pressed_keys = pygame.key.get_pressed()
+      player.update(pressed_keys)
+
+      # Desenha fundo
+      screen.fill((105, 105, 105))
+      if mapOn:
+         drawMap2D()
+         screen.blit(player.surf, player.rect)
+      drawRays2D()
+
+      # Flipa display e espera relogio
+      pygame.display.flip()
+      clock.tick(30)
+      await asyncio.sleep(0)
+   
+asyncio.run(main())
