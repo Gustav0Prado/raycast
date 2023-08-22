@@ -16,7 +16,6 @@ jobs:
       run: |
             echo "Attempting to install pygbag"
             python -m pip install pygbag
-            ls
             echo "Successfully installed pygbag"
             echo "Attempting to build the game"
             python -m pygbag --build main.py
