@@ -9,46 +9,95 @@ RED = (250, 0, 0)
 SCALE = 1
 OLDSCALE = SCALE
 PLAYER_SIZE = 25 * SCALE / 1.1
+
+DR = 0.0174533 # um grau em radianos
+
 mapOffset = 0
 
-def drawRays3D():
-   ra = player.a
-   for r in range(1):
+def dist(x1, y1, x2, y2, ang):
+   return math.sqrt( ((x2-x1) * (x2-x1)) + ((y2-y1) * (y2-y1)) )
+
+def drawRays2D():
+   ######################### Checa horizontal ###############################
+   ra = player.a - DR
+   if ra < 0:           ra += 2*math.pi
+   if ra > 2*math.pi:   ra -= 2*math.pi
+   px = player.rect.centerx
+   py = player.rect.centery
+
+   for r in range(60):
       # Checa linhas horizontais
+      distH=1000000; hx = px; hy = py
       dof = 0
       atan = -1/math.tan(ra)
 
       # Raio para cima
       if ra > math.pi and ra < 2*math.pi:
-         ry = (int(player.rect.centery >> 6)<<6)-0.0001
-         rx = (player.rect.centery - ry) * atan + player.rect.centerx
+         ry = (int(py >> 6)<<6)-0.0001
+         rx = (py - ry) * atan + px
          yo = -64; xo = -yo*atan
 
       # Raio para baixo
       if ra < math.pi and ra > 0:
-         ry = (int(player.rect.centery >> 6)<<6)+64
-         rx = (player.rect.centery - ry) * atan + player.rect.centerx
+         ry = (int(py >> 6)<<6)+64
+         rx = (py - ry) * atan + px
          yo = 64; xo = -yo*atan
 
       # Raio reto para esquerda ou direita
       if (ra == 0 or ra == 2*math.pi):
-         rx = player.rect.centerx; ry = player.rect.centery; dof = 8
+         rx = px; ry = py; dof = 8
       
       while (dof < 8):
          mx = int(rx) >> 6; my = int(ry) >> 6
          mp = my * mapX + mx
 
-         pygame.draw.line(screen, (10, 206, 27), (player.rect.centerx, player.rect.centery), (rx, ry), 1)
-         pygame.display.flip()
+         # bateu na parede
+         if(mp > 0 and mp < mapX*mapY and map[mp] == 1):
+            hx = rx; hy = ry; distH=dist(px, py, hx, hy, ra); dof = 8
+         else:
+            rx += xo; ry += yo; dof += 1
+
+      ######################### Checa vertical ###############################
+      dof = 0
+      ntan = -math.tan(ra)
+      distV=1000000; vx = px; vy = py
+
+      # Raio para esquerda
+      if ra > math.pi/2 and ra < 3*math.pi/2:
+         rx = (int(px >> 6)<<6)-0.0001
+         ry = (px - rx) * ntan + py
+         xo = -64; yo = -xo*ntan
+
+      # Raio para direita
+      if ra < math.pi/2 or ra > 3*math.pi/2:
+         rx = (int(px >> 6)<<6)+64
+         ry = (px - rx) * ntan + py
+         xo = 64; yo = -xo*ntan
+
+      # Raio reto para cima ou baixo
+      if (ra == math.pi/2 or ra == 3*math.pi/2):
+         rx = px; ry = py; dof = 8
+      
+      while (dof < 8):
+         mx = int(rx) >> 6; my = int(ry) >> 6
+         mp = my * mapX + mx
 
          # bateu na parede
          if(mp > 0 and mp < mapX*mapY and map[mp] == 1):
-            dof = 8
+            vx = rx; vy = ry; distV=dist(px, py, vx, vy, ra); dof = 8
          else:
             rx += xo; ry += yo; dof += 1
 
       # Desenha rays
-      #pygame.draw.line(screen, (10, 206, 27), (player.rect.centerx, player.rect.centery), (rx, ry), 1)
+      if distV < distH: rx = vx; ry = vy
+      if distV > distH: rx = hx; ry = hy
+      
+      pygame.draw.line(screen, (22, 255, 53), (px, py), (rx, ry), 2)
+
+      # Aumenta angulo do proximo ray
+      ra += DR
+      if ra < 0:           ra += 2*math.pi
+      if ra > 2*math.pi:   ra -= 2*math.pi
 
 def xToTile(x, y, s):
    # Calcula indice da tile basedo no x e y do player e em uma escala
@@ -72,7 +121,7 @@ class Player():
       self.rect.center = tileToX(2, 6)
 
       # Direcao inicial
-      self.a  = 2*math.pi
+      self.a  = 7*math.pi/4
       self.dx = math.cos(self.a) * 5; self.dy = math.sin(self.a) * 5
 
    def update(self, pressed_keys):
@@ -141,14 +190,14 @@ def drawMap2D():
             pygame.draw.line( screen, ((138, 138, 138)), (xo + mapS, yo), (xo + mapS, yo + mapS), 1)
 
    # Desenha linha com a direcao do player
-   cx = player.rect.centerx
-   cy = player.rect.centery
-   pygame.draw.line(
-      screen, (RED),
-      (cx, cy),
-      (cx + player.dx * PLAYER_SIZE / 2, cy + player.dy * PLAYER_SIZE / 2),
-      2
-   )
+   # cx = player.rect.centerx
+   # cy = player.rect.centery
+   # pygame.draw.line(
+   #    screen, (RED),
+   #    (cx, cy),
+   #    (cx + player.dx * PLAYER_SIZE / 2, cy + player.dy * PLAYER_SIZE / 2),
+   #    2
+   # )
 
 # Opcoes booleanas
 done = False
@@ -210,10 +259,9 @@ while not done:
          
          rescale = False
       screen.blit(player.surf, player.rect)
-      pygame.display.flip()
-      drawRays3D()
+      drawRays2D()
 
    # Flipa display e espera relogio
-   #1pygame.display.flip()
+   pygame.display.flip()
    clock.tick(30)
          
