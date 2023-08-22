@@ -12,7 +12,7 @@ OLDSCALE = SCALE
 PLAYER_SIZE = 8
 
 DR = 0.0174533 # um grau em radianos
-def dist(x1, y1, x2, y2, ang):
+def dist(x1, y1, x2, y2):
    return math.sqrt( ((x2-x1) * (x2-x1)) + ((y2-y1) * (y2-y1)) )
 
 def drawRays2D():
